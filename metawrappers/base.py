@@ -36,7 +36,7 @@ class WrapperSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator, metaclas
         features = np.arange(X.shape[1])[support_]
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(X[:, features], y)
-        self.n_features_ = self.support_.sum()
+        self.n_features_ = support_.sum()
         self.support_ = support_
         return self
 
