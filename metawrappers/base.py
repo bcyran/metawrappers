@@ -3,24 +3,44 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 from sklearn.base import BaseEstimator, MetaEstimatorMixin, clone
 from sklearn.feature_selection import SelectorMixin
+from sklearn.metrics import get_scorer
+from sklearn.model_selection import cross_val_score
 from sklearn.utils.metaestimators import if_delegate_has_method
 from sklearn.utils.validation import check_is_fitted
 
 
 class WrapperSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
-    def __init__(self, estimator, *, n_features_to_select=None):
+    def __init__(self, estimator, n_features_to_select=1, scoring="accuracy", cv=5, n_jobs=-1):
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
+        self.scoring = scoring
+        self.scorer = get_scorer(scoring)
+        self.cv = cv
+        self.n_jobs = n_jobs
 
     @abstractmethod
     def _select_features(self, X, y):
         """Perform the feature selection.
 
-        :param X: Training vectors.
+        :param X: Feature vectors.
         :param y: Target values.
         :return: Boolean mask of selected features.
         """
+
+    def _score_mask(self, mask, X, y):
+        """Evaluate given feature mask according to Selector settings.
+
+        :param X: Feature vectors.
+        :param y: Target values.
+        :return: Calculated score of the feature mask.
+        """
+        X = X[:, mask]
+        if self.cv:
+            return np.average(cross_val_score(self.estimator, X, y, n_jobs=self.n_jobs))
+        else:
+            self.estimator.fit(X, y)
+            return self.scorer(self.estimator, X, y)
 
     @property
     def classes_(self):
