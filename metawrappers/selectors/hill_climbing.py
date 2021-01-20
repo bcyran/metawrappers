@@ -53,13 +53,12 @@ class HCSelector(WrapperSelector):
     def _select_features(self, X, y):
         cur_mask = random_mask(X.shape[1], self.n_features_to_select, self._rng)
         cur_score = self._score_mask(cur_mask, X, y)
-        best_mask, best_score = cur_mask, cur_score
 
         for i in range(self.iterations):
-            cur_mask = random_neighbor(cur_mask, self._rng)
-            cur_score = self._score_mask(cur_mask, X, y)
+            next_mask = random_neighbor(cur_mask, self._rng)
+            next_score = self._score_mask(next_mask, X, y)
 
-            if cur_score > best_score:
-                best_mask, best_score = cur_mask, cur_score
+            if next_score > cur_score:
+                cur_mask, cur_score = next_mask, next_score
 
-        return best_mask
+        return cur_mask
