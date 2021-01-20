@@ -21,6 +21,9 @@ class RandomSelector(WrapperSelector):
     n_jobs : int, default=-1
         Number of CPU-s to use for internal feature set evaluation.
         See `sklearn.model_selection.cross_val_score` documentation for more info.
+    random_state : int, ``RandomState`` instance or None, default=None
+        Controls randomness of the selector. Pass an int for reproducible output across multiple
+        function calls.
 
     Attributes
     ----------
@@ -33,4 +36,4 @@ class RandomSelector(WrapperSelector):
     """
 
     def _select_features(self, X, y):
-        return random_mask(X.shape[1], self.n_features_to_select)
+        return random_mask(X.shape[1], self.n_features_to_select, self._rng)

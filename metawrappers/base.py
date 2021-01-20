@@ -5,6 +5,7 @@ from sklearn.base import BaseEstimator, MetaEstimatorMixin, clone
 from sklearn.feature_selection import SelectorMixin
 from sklearn.metrics import get_scorer
 from sklearn.model_selection import cross_val_score
+from sklearn.utils import check_random_state
 from sklearn.utils.metaestimators import if_delegate_has_method
 from sklearn.utils.validation import check_is_fitted
 
@@ -28,6 +29,9 @@ class WrapperSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator, metaclas
     n_jobs : int, default=-1
         Number of CPU-s to use for internal feature set evaluation.
         See `sklearn.model_selection.cross_val_score` documentation for more info.
+    random_state : int, ``RandomState`` instance or None, default=None
+        Controls randomness of the selector. Pass an int for reproducible output across multiple
+        function calls.
 
     Attributes
     ----------
@@ -39,13 +43,23 @@ class WrapperSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator, metaclas
         The mask of selected features.
     """
 
-    def __init__(self, estimator, n_features_to_select=1, scoring="accuracy", cv=5, n_jobs=-1):
+    def __init__(
+        self,
+        estimator,
+        n_features_to_select=1,
+        scoring="accuracy",
+        cv=5,
+        n_jobs=-1,
+        random_state=None,
+    ):
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
         self.scoring = scoring
         self.scorer = get_scorer(scoring)
         self.cv = cv
         self.n_jobs = n_jobs
+        self.random_state = random_state
+        self._rng = check_random_state(random_state)
 
     @abstractmethod
     def _select_features(self, X, y):

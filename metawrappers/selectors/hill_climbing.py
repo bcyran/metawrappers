@@ -23,6 +23,9 @@ class HCSelector(WrapperSelector):
     n_jobs : int, default=-1
         Number of CPU-s to use for internal feature set evaluation.
         See `sklearn.model_selection.cross_val_score` documentation for more info.
+    random_state : int, ``RandomState`` instance or None, default=None
+        Controls randomness of the selector. Pass an int for reproducible output across multiple
+        function calls.
 
     Attributes
     ----------
@@ -35,18 +38,25 @@ class HCSelector(WrapperSelector):
     """
 
     def __init__(
-        self, estimator, n_features_to_select=1, iterations=50, scoring="accuracy", cv=5, n_jobs=-1
+        self,
+        estimator,
+        n_features_to_select=1,
+        iterations=50,
+        scoring="accuracy",
+        cv=5,
+        n_jobs=-1,
+        random_state=None,
     ):
-        super().__init__(estimator, n_features_to_select, scoring, cv, n_jobs)
+        super().__init__(estimator, n_features_to_select, scoring, cv, n_jobs, random_state)
         self.iterations = iterations
 
     def _select_features(self, X, y):
-        cur_mask = random_mask(X.shape[1], self.n_features_to_select)
+        cur_mask = random_mask(X.shape[1], self.n_features_to_select, self._rng)
         cur_score = self._score_mask(cur_mask, X, y)
         best_mask, best_score = cur_mask, cur_score
 
         for i in range(self.iterations):
-            cur_mask = random_neighbor(cur_mask)
+            cur_mask = random_neighbor(cur_mask, self._rng)
             cur_score = self._score_mask(cur_mask, X, y)
 
             if cur_score > best_score:
