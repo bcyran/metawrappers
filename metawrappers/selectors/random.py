@@ -1,5 +1,5 @@
 from metawrappers.base import WrapperSelector
-from metawrappers.utils import random_mask
+from metawrappers.common.mask import random_mask
 
 
 class RandomSelector(WrapperSelector):
