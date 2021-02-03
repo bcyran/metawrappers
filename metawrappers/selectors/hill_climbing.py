@@ -9,12 +9,12 @@ class HCSelector(WrapperSelector):
     ----------
     estimator : ``Estimator`` instance
         A supervised learning estimator with a ``fit`` method.
+    iterations : int, default=50
+        The number of iterations to perform.
     min_features : int, default=1
         The minimal number of features to select.
     max_features : int, default=-1
         The maxmimal number of features to select. -1 means all features.
-    iterations : int, default=50
-        The number of iterations to perform.
     scoring : str or callable, default='accuracy'
         Scoring metric to use for internal feature set evaluation. This and the following
         scoring-related attributes do not affect the `score` method.
@@ -42,9 +42,10 @@ class HCSelector(WrapperSelector):
     def __init__(
         self,
         estimator,
+        *,
+        iterations=50,
         min_features=1,
         max_features=-1,
-        iterations=50,
         scoring="accuracy",
         cv=5,
         n_jobs=-1,

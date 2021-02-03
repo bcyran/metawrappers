@@ -37,5 +37,18 @@ class RandomSelector(WrapperSelector):
         The mask of selected features.
     """
 
+    def __init__(
+        self,
+        estimator,
+        *,
+        min_features=1,
+        max_features=-1,
+        scoring="accuracy",
+        cv=5,
+        n_jobs=-1,
+        random_state=None,
+    ):
+        super().__init__(estimator, min_features, max_features, scoring, cv, n_jobs, random_state)
+
     def _select_features(self, X, y):
         return random_mask(X.shape[1], self._min_features, self._max_features, self._rng)
