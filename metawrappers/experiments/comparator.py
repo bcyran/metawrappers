@@ -60,7 +60,6 @@ class Comparator:
 
             self._run_test(X, y)
 
-        self.results.to_csv("test.csv")
         if self.verbose:
             print("Comparison summary:")
             print(self.summary())
