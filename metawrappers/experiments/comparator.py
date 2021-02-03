@@ -35,7 +35,10 @@ class Comparator:
         self.n_splits = n_splits
         self.random_state = random_state
         self.verbose = verbose
-        self.results = pd.DataFrame(columns=self.estimator_names)
+        columns_index = pd.MultiIndex.from_product(
+            [self.estimator_names, ["#feat", "score"]], names=["Estimator", "Value"]
+        )
+        self.results = pd.DataFrame(columns=columns_index)
 
     @property
     def estimator_names(self):
@@ -57,6 +60,7 @@ class Comparator:
 
             self._run_test(X, y)
 
+        self.results.to_csv("test.csv")
         if self.verbose:
             print("Comparison summary:")
             print(self.summary())
@@ -64,12 +68,13 @@ class Comparator:
     def _run_test(self, X, y):
         skf = StratifiedKFold(n_splits=self.n_splits, shuffle=True, random_state=self.random_state)
 
-        scores = defaultdict(list)
+        run_results = {name: {"features": [], "scores": []} for name in self.estimator_names}
         for train, test in skf.split(X, y):
             for estimator in self.estimators:
                 estimator.fit(X[train], y[train])
                 score = estimator.score(X[test], y[test])
-                scores[estimator.__class__.__name__].append(score)
+                run_results[estimator.__class__.__name__]["scores"].append(score)
+                run_results[estimator.__class__.__name__]["features"].append(estimator.n_features_)
 
                 if self.verbose:
                     print(".", end="", flush=True)
@@ -80,14 +85,17 @@ class Comparator:
         if self.verbose:
             print("")
 
-        self._append_to_results(scores)
+        self._append_to_results(run_results)
 
-    def _append_to_results(self, scores):
-        averages = {}
-        for estimator_name, estimator_scores in scores.items():
-            averages[estimator_name] = mean(estimator_scores)
+    def _append_to_results(self, run_results):
+        row = []
+        for name, results_dict in run_results.items():
+            row.append(mean(results_dict["features"]))
+            row.append(mean(results_dict["scores"]))
 
-        self.results = self.results.append(averages, ignore_index=True)
+        self.results = self.results.append(
+            pd.Series(row, index=self.results.columns), ignore_index=True
+        )
 
     def summary(self, baseline=0, significance_level=0.05):
         """Return summary of comparison results.
@@ -105,16 +113,20 @@ class Comparator:
             DataFrame containing average score and Wilcoxon signed-rank test results
             with respect to baseline for each estimator.
         """
+        summary = pd.DataFrame(columns=["#feat", "score", "W", "p", "h0 rejected"])
+
         baseline_name = self.estimator_names[baseline] if isinstance(baseline, int) else baseline
         averages = self.results.mean()
 
-        summary = pd.DataFrame(columns=["avg", "W", "p", "h0 rejected"])
-        for estimator_name in self.results.columns:
-            if estimator_name == baseline_name:
+        for estimator in self.estimator_names:
+            if estimator == baseline_name:
                 w, p = None, None
             else:
-                w, p = wilcoxon(self.results[baseline_name], self.results[estimator_name])
-            summary.loc[estimator_name] = [averages[estimator_name], w, p, None]
+                w, p = wilcoxon(
+                    self.results[baseline_name]["score"], self.results[estimator]["score"]
+                )
+
+            summary.loc[estimator] = [*averages[estimator], w, p, None]
 
         summary["h0 rejected"] = summary["p"] < significance_level
         return summary
