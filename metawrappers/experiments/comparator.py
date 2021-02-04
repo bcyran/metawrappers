@@ -1,4 +1,3 @@
-from collections import defaultdict
 from statistics import mean
 
 import pandas as pd
@@ -6,13 +5,26 @@ from scipy.stats import wilcoxon
 from sklearn.model_selection import StratifiedKFold
 
 
+def _check_estimators(estimators):
+    if isinstance(estimators, dict):
+        return estimators
+    elif isinstance(estimators, (list, tuple)):
+        labels = [e.__class__.__name__ for e in estimators]
+        if len(set(labels)) != len(labels):
+            raise RuntimeError("non-unique estimators given, use dict to label them")
+        return dict(zip(labels, estimators))
+    else:
+        raise RuntimeError("'estimators' argument must be one of: dict, list, tuple")
+
+
 class Comparator:
     """Performs multiple cross-validations using multiple estimators in order to compare them.
 
     Parameters
     ----------
-    estimators : list of ``Estimator`` instances
-        Estimators to compare.
+    estimators : {dict, list, tuple}
+        Either dict mapping labels to estimators or list of estimators.
+        If list is given, class names will be used as labels, thus estimator classes must be unique.
     n_tests : int, default=25
         Number of cross-validations to perform.
     n_splits : int, default=5
@@ -30,19 +42,15 @@ class Comparator:
     """
 
     def __init__(self, estimators, n_tests=25, n_splits=5, random_state=None, verbose=True):
-        self.estimators = estimators
+        self._estimators = _check_estimators(estimators)
         self.n_tests = n_tests
         self.n_splits = n_splits
         self.random_state = random_state
         self.verbose = verbose
         columns_index = pd.MultiIndex.from_product(
-            [self.estimator_names, ["#feat", "score"]], names=["Estimator", "Value"]
+            [self._estimators.keys(), ["#feat", "score"]], names=["Estimator", "Value"]
         )
         self.results = pd.DataFrame(columns=columns_index)
-
-    @property
-    def estimator_names(self):
-        return [e.__class__.__name__ for e in self.estimators]
 
     def run(self, X, y):
         """Run the tests on the given dataset.
@@ -67,13 +75,13 @@ class Comparator:
     def _run_test(self, X, y):
         skf = StratifiedKFold(n_splits=self.n_splits, shuffle=True, random_state=self.random_state)
 
-        run_results = {name: {"features": [], "scores": []} for name in self.estimator_names}
+        run_results = {name: {"features": [], "scores": []} for name in self._estimators.keys()}
         for train, test in skf.split(X, y):
-            for estimator in self.estimators:
+            for label, estimator in self._estimators.items():
                 estimator.fit(X[train], y[train])
                 score = estimator.score(X[test], y[test])
-                run_results[estimator.__class__.__name__]["scores"].append(score)
-                run_results[estimator.__class__.__name__]["features"].append(estimator.n_features_)
+                run_results[label]["scores"].append(score)
+                run_results[label]["features"].append(estimator.n_features_)
 
                 if self.verbose:
                     print(".", end="", flush=True)
@@ -114,10 +122,12 @@ class Comparator:
         """
         summary = pd.DataFrame(columns=["#feat", "score", "W", "p", "h0 rejected"])
 
-        baseline_name = self.estimator_names[baseline] if isinstance(baseline, int) else baseline
+        baseline_name = (
+            list(self._estimators.keys())[baseline] if isinstance(baseline, int) else baseline
+        )
         averages = self.results.mean()
 
-        for estimator in self.estimator_names:
+        for estimator in self._estimators.keys():
             if estimator == baseline_name:
                 w, p = None, None
             else:
