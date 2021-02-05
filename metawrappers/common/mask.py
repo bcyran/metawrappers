@@ -10,7 +10,7 @@ def random_mask(n_features, min_select, max_select, random_state=None):
     return mask
 
 
-def random_neighbor(mask, min_select, max_select, random_state=None):
+def flip_neighbor(mask, min_select, max_select, random_state=None):
     rng = check_random_state(random_state)
     if mask.sum() == min_select:
         index_map = np.where(np.logical_not(mask))[0]
@@ -21,3 +21,22 @@ def random_neighbor(mask, min_select, max_select, random_state=None):
     flip_index = index_map[rng.randint(0, index_map.size)]
     mask[flip_index] = not mask[flip_index]
     return mask
+
+
+def two_flip_neigbor(mask, min_select, max_select, random_state=None):
+    # TODO: Forbid double flipping of the same index
+    mask = flip_neighbor(mask, min_select, max_select, random_state)
+    return flip_neighbor(mask, min_select, max_select, random_state)
+
+
+NEIGHBORHOOD_DICT = {
+    "1-flip": flip_neighbor,
+    "2-flip": two_flip_neigbor,
+}
+
+
+def get_neighbor(neighborhood, mask, min_select, max_select, random_state=None):
+    if not neighborhood:
+        rng = check_random_state(random_state)
+        neighborhood = rng.choice(list(NEIGHBORHOOD_DICT.keys()), 1)[0]
+    return NEIGHBORHOOD_DICT[neighborhood](mask, min_select, max_select, random_state)

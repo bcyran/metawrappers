@@ -1,7 +1,7 @@
 from math import exp
 
 from metawrappers.base import WrapperSelector
-from metawrappers.common.mask import random_mask, random_neighbor
+from metawrappers.common.mask import get_neighbor, random_mask
 
 
 class SASelector(WrapperSelector):
@@ -13,6 +13,8 @@ class SASelector(WrapperSelector):
         A supervised learning estimator with a ``fit`` method.
     iterations : int, default=50
         The number of iterations to perform.
+    neighborhood: {"1-flip", "2-flip"}, default=None
+        Type of the neighborhood. `None` will choose randomly every time neighbor is requested.
     initial_temperature : int or float, default=10
         Initial annealing temperature.
     cooling_rate : float, default=0.05
@@ -50,6 +52,7 @@ class SASelector(WrapperSelector):
         estimator,
         *,
         iterations=50,
+        neighborhood="2-flip",
         initial_temperature=10,
         cooling_rate=0.05,
         min_features=1,
@@ -61,6 +64,7 @@ class SASelector(WrapperSelector):
     ):
         super().__init__(estimator, min_features, max_features, scoring, cv, n_jobs, random_state)
         self.iterations = iterations
+        self.neighborhood = neighborhood
         self.initial_temperature = initial_temperature
         self.cooling_rate = cooling_rate
 
@@ -71,7 +75,9 @@ class SASelector(WrapperSelector):
         best_mask, best_score = cur_mask, cur_score
 
         for i in range(self.iterations):
-            new_mask = random_neighbor(cur_mask, self._min_features, self._max_features, self._rng)
+            new_mask = get_neighbor(
+                self.neighborhood, cur_mask, self._min_features, self._max_features, self._rng
+            )
             new_score = self._score_mask(cur_mask, X, y)
 
             delta_score = new_score - cur_score

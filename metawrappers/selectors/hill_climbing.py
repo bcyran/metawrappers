@@ -1,5 +1,5 @@
 from metawrappers.base import WrapperSelector
-from metawrappers.common.mask import random_mask, random_neighbor
+from metawrappers.common.mask import get_neighbor, random_mask
 
 
 class HCSelector(WrapperSelector):
@@ -11,6 +11,8 @@ class HCSelector(WrapperSelector):
         A supervised learning estimator with a ``fit`` method.
     iterations : int, default=50
         The number of iterations to perform.
+    neighborhood: {"1-flip", "2-flip"}, default=None
+        Type of the neighborhood. `None` will choose randomly every time neighbor is requested.
     min_features : int, default=1
         The minimal number of features to select.
     max_features : int, default=-1
@@ -44,6 +46,7 @@ class HCSelector(WrapperSelector):
         estimator,
         *,
         iterations=50,
+        neighborhood="2-flip",
         min_features=1,
         max_features=-1,
         scoring="accuracy",
@@ -53,13 +56,16 @@ class HCSelector(WrapperSelector):
     ):
         super().__init__(estimator, min_features, max_features, scoring, cv, n_jobs, random_state)
         self.iterations = iterations
+        self.neighborhood = neighborhood
 
     def _select_features(self, X, y):
         cur_mask = random_mask(X.shape[1], self._min_features, self._max_features, self._rng)
         cur_score = self._score_mask(cur_mask, X, y)
 
         for i in range(self.iterations):
-            next_mask = random_neighbor(cur_mask, self._min_features, self._max_features, self._rng)
+            next_mask = get_neighbor(
+                self.neighborhood, cur_mask, self._min_features, self._max_features, self._rng
+            )
             next_score = self._score_mask(next_mask, X, y)
 
             if next_score > cur_score:
