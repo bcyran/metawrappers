@@ -12,21 +12,38 @@ def random_mask(n_features, min_select, max_select, random_state=None):
 
 def flip_neighbor(mask, min_select, max_select, random_state=None):
     rng = check_random_state(random_state)
-    if mask.sum() == min_select:
-        index_map = np.where(np.logical_not(mask))[0]
-    elif mask.sum() == max_select:
-        index_map = np.where(mask)[0]
-    else:
-        index_map = np.arange(mask.shape[0])
-    flip_index = index_map[rng.randint(0, index_map.size)]
-    mask[flip_index] = not mask[flip_index]
-    return mask
+    allowed_indices = allowed_flips(mask, min_select, max_select)
+    flip_index = rng.choice(allowed_indices, 1)[0]
+    return flip(mask, flip_index)
 
 
 def two_flip_neigbor(mask, min_select, max_select, random_state=None):
-    # TODO: Forbid double flipping of the same index
-    mask = flip_neighbor(mask, min_select, max_select, random_state)
-    return flip_neighbor(mask, min_select, max_select, random_state)
+    rng = check_random_state(random_state)
+    first_flip_allowed = allowed_flips(mask, min_select, max_select)
+    first_flip_index = rng.choice(first_flip_allowed, 1)[0]
+    mask = flip(mask, first_flip_index)
+    second_flip_allowed = allowed_flips(mask, min_select, max_select)
+    second_flip_allowed = second_flip_allowed[second_flip_allowed != first_flip_index]
+    second_flip_index = rng.choice(second_flip_allowed, 1)[0]
+    return flip(mask, second_flip_index)
+
+
+def flip_neighborhood(mask, min_select, max_select):
+    return [flip(mask, index) for index in allowed_flips(mask, min_select, max_select)]
+
+
+def allowed_flips(mask, min_select, max_select):
+    if mask.sum() == min_select:
+        return np.where(np.logical_not(mask))[0]
+    elif mask.sum() == max_select:
+        return np.where(mask)[0]
+    return np.arange(mask.shape[0])
+
+
+def flip(mask, index):
+    new_mask = mask.copy()
+    new_mask[index] = not new_mask[index]
+    return new_mask
 
 
 NEIGHBORHOOD_DICT = {

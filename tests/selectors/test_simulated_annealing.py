@@ -2,11 +2,11 @@ from metawrappers import SASelector
 
 
 # fmt: off
-EXPECTED_SUPPORT = [True, True, False, True, True, True, False, True, True, True, False, True,
-                    False, True, False, False, False, False, False, False, True, True, True, True,
-                    False, True, True, True, True, True]
+EXPECTED_SUPPORT = [True, True, True, False, False, True, False, True, True, False, True, False,
+                    False, True, True, True, False, False, False, True, True, True, True, False,
+                    False, True, False, True, False, True]
 # fmt: on
-EXPECTED_SCORE = 0.9209138840070299
+EXPECTED_SCORE = 0.9367311072056239
 
 
 def test_hc_selector(classifier, dataset, random_state):
