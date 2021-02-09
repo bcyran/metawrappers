@@ -1,7 +1,7 @@
 from math import exp
 
 from metawrappers.base import WrapperSelector
-from metawrappers.common.mask import get_neighbor, random_mask
+from metawrappers.common.mask import random_mask, random_neighbor
 
 
 class SASelector(WrapperSelector):
@@ -75,7 +75,7 @@ class SASelector(WrapperSelector):
         best_mask, best_score = cur_mask, cur_score
 
         for i in range(self.iterations):
-            new_mask = get_neighbor(
+            new_mask = random_neighbor(
                 self.neighborhood, cur_mask, self._min_features, self._max_features, self._rng
             )
             new_score = self._score_mask(cur_mask, X, y)

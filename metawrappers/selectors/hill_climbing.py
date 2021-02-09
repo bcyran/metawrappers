@@ -1,5 +1,5 @@
 from metawrappers.base import WrapperSelector
-from metawrappers.common.mask import get_neighbor, random_mask
+from metawrappers.common.mask import random_mask, random_neighbor
 
 
 class HCSelector(WrapperSelector):
@@ -63,7 +63,7 @@ class HCSelector(WrapperSelector):
         cur_score = self._score_mask(cur_mask, X, y)
 
         for i in range(self.iterations):
-            next_mask = get_neighbor(
+            next_mask = random_neighbor(
                 self.neighborhood, cur_mask, self._min_features, self._max_features, self._rng
             )
             next_score = self._score_mask(next_mask, X, y)

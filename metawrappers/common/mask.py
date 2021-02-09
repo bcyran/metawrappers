@@ -10,14 +10,14 @@ def random_mask(n_features, min_select, max_select, random_state=None):
     return mask
 
 
-def flip_neighbor(mask, min_select, max_select, random_state=None):
+def random_flip(mask, min_select, max_select, random_state=None):
     rng = check_random_state(random_state)
     allowed_indices = allowed_flips(mask, min_select, max_select)
     flip_index = rng.choice(allowed_indices, 1)[0]
     return flip(mask, flip_index)
 
 
-def two_flip_neigbor(mask, min_select, max_select, random_state=None):
+def random_two_flip(mask, min_select, max_select, random_state=None):
     rng = check_random_state(random_state)
     first_flip_allowed = allowed_flips(mask, min_select, max_select)
     first_flip_index = rng.choice(first_flip_allowed, 1)[0]
@@ -46,14 +46,14 @@ def flip(mask, index):
     return new_mask
 
 
-NEIGHBORHOOD_DICT = {
-    "1-flip": flip_neighbor,
-    "2-flip": two_flip_neigbor,
+RANDOM_NEIGHBOR_DICT = {
+    "1-flip": random_flip,
+    "2-flip": random_two_flip,
 }
 
 
-def get_neighbor(neighborhood, mask, min_select, max_select, random_state=None):
+def random_neighbor(neighborhood, mask, min_select, max_select, random_state=None):
     if not neighborhood:
         rng = check_random_state(random_state)
-        neighborhood = rng.choice(list(NEIGHBORHOOD_DICT.keys()), 1)[0]
-    return NEIGHBORHOOD_DICT[neighborhood](mask, min_select, max_select, random_state)
+        neighborhood = rng.choice(list(RANDOM_NEIGHBOR_DICT.keys()), 1)[0]
+    return RANDOM_NEIGHBOR_DICT[neighborhood](mask, min_select, max_select, random_state)
