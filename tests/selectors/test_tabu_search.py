@@ -4,13 +4,9 @@ import pytest
 from metawrappers import LTSSelector
 
 
-EVAPORATION = 0.9
-
-
 @pytest.fixture
 def selector(classifier):
-    selector = LTSSelector(classifier)
-    selector.evaporation = EVAPORATION
+    selector = LTSSelector(classifier, evaporation_rate=0.9)
     return selector
 
 
