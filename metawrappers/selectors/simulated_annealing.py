@@ -85,7 +85,7 @@ class SASelector(WrapperSelector):
             new_mask = random_neighbor(
                 self.neighborhood, cur_mask, self._min_features, self._max_features, self._rng
             )
-            new_score = self._score_mask(cur_mask, X, y)
+            new_score = self._score_mask(new_mask, X, y)
 
             delta_score = new_score - cur_score
 

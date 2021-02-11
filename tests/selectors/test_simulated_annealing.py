@@ -2,14 +2,14 @@ from metawrappers import SASelector
 
 
 # fmt: off
-EXPECTED_SUPPORT = [True, True, True, False, False, True, False, True, True, False, True, False,
-                    False, True, True, True, False, False, False, True, True, True, True, False,
-                    False, True, False, True, False, True]
+EXPECTED_SUPPORT = [True, True, True, False, False, True, False, True, True, False, True, True,
+                    False, True, True, True, False, True, False, True, False, True, True, False,
+                    False, True, False, True, False, False]
 # fmt: on
 EXPECTED_SCORE = 0.9367311072056239
 
 
-def test_hc_selector(classifier, dataset, random_state):
+def test_sa_selector(classifier, dataset, random_state):
     X, y = dataset
     selector = SASelector(classifier, random_state=random_state)
     X_r = selector.fit_transform(X, y)
