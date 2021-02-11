@@ -13,6 +13,8 @@ class SASelector(WrapperSelector):
         A supervised learning estimator with a ``fit`` method.
     iterations : int, default=50
         The number of iterations to perform.
+    run_time : int, default=None
+        Maximum runtime of the selector in milliseconds. If set supersedes the ``iterations`` param.
     neighborhood: {"1-flip", "2-flip"}, default=None
         Type of the neighborhood. `None` will choose randomly every time neighbor is requested.
     initial_temperature : int or float, default=10
@@ -52,6 +54,7 @@ class SASelector(WrapperSelector):
         estimator,
         *,
         iterations=50,
+        run_time=None,
         neighborhood="2-flip",
         initial_temperature=10,
         cooling_rate=0.05,
@@ -64,17 +67,21 @@ class SASelector(WrapperSelector):
     ):
         super().__init__(estimator, min_features, max_features, scoring, cv, n_jobs, random_state)
         self.iterations = iterations
+        self.run_time = run_time
         self.neighborhood = neighborhood
         self.initial_temperature = initial_temperature
         self.cooling_rate = cooling_rate
 
     def _select_features(self, X, y):
+        self._start_timer()
+        iteration = 1
+
         temperature = self.initial_temperature
         cur_mask = random_mask(X.shape[1], self._min_features, self._max_features, self._rng)
         cur_score = self._score_mask(cur_mask, X, y)
         best_mask, best_score = cur_mask, cur_score
 
-        for i in range(self.iterations):
+        while True:
             new_mask = random_neighbor(
                 self.neighborhood, cur_mask, self._min_features, self._max_features, self._rng
             )
@@ -90,5 +97,9 @@ class SASelector(WrapperSelector):
                 cur_mask, cur_score = new_mask, new_score
 
             temperature *= 1 - self.cooling_rate
+
+            if self._end_condition(iteration):
+                break
+            iteration += 1
 
         return best_mask

@@ -11,6 +11,8 @@ class HCSelector(WrapperSelector):
         A supervised learning estimator with a ``fit`` method.
     iterations : int, default=50
         The number of iterations to perform.
+    run_time : int, default=None
+        Maximum runtime of the selector in milliseconds. If set supersedes the ``iterations`` param.
     neighborhood: {"1-flip", "2-flip"}, default=None
         Type of the neighborhood. `None` will choose randomly every time neighbor is requested.
     min_features : int, default=1
@@ -46,6 +48,7 @@ class HCSelector(WrapperSelector):
         estimator,
         *,
         iterations=50,
+        run_time=None,
         neighborhood="2-flip",
         min_features=1,
         max_features=-1,
@@ -56,13 +59,17 @@ class HCSelector(WrapperSelector):
     ):
         super().__init__(estimator, min_features, max_features, scoring, cv, n_jobs, random_state)
         self.iterations = iterations
+        self.run_time = run_time
         self.neighborhood = neighborhood
 
     def _select_features(self, X, y):
+        self._start_timer()
+        iteration = 1
+
         cur_mask = random_mask(X.shape[1], self._min_features, self._max_features, self._rng)
         cur_score = self._score_mask(cur_mask, X, y)
 
-        for i in range(self.iterations):
+        while True:
             next_mask = random_neighbor(
                 self.neighborhood, cur_mask, self._min_features, self._max_features, self._rng
             )
@@ -70,5 +77,9 @@ class HCSelector(WrapperSelector):
 
             if next_score > cur_score:
                 cur_mask, cur_score = next_mask, next_score
+
+            if self._end_condition(iteration):
+                break
+            iteration += 1
 
         return cur_mask

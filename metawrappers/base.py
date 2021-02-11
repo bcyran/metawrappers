@@ -1,3 +1,4 @@
+import time
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
@@ -69,6 +70,7 @@ class WrapperSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator, metaclas
         # Real values after adjusting
         self._min_features = None
         self._max_features = None
+        self._start_time = 0
 
     @abstractmethod
     def _select_features(self, X, y):
@@ -137,6 +139,23 @@ class WrapperSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator, metaclas
     def _get_support_mask(self):
         check_is_fitted(self)
         return self.support_
+
+    def _start_timer(self):
+        self._start_time = time.perf_counter_ns()
+
+    def _time(self):
+        return time.perf_counter_ns() - self._start_time
+
+    def _time_ms(self):
+        return self._time() // (10 ** 6)
+
+    def _end_condition(self, iteration=None):
+        if self.run_time:
+            if self._time_ms() >= self.run_time:
+                return True
+        elif iteration:
+            if iteration >= self.iterations:
+                return True
 
     @if_delegate_has_method(delegate="estimator")
     def predict(self, X):

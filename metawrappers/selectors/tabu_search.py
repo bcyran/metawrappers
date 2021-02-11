@@ -19,6 +19,8 @@ class LTSSelector(WrapperSelector):
         A supervised learning estimator with a ``fit`` method.
     iterations : int, default=20
         The number of iterations to perform.
+    run_time : int, default=None
+        Maximum runtime of the selector in milliseconds. If set supersedes the ``iterations`` param.
     tabu_length : int, default=10
         Number of elements in the tabu list.
     evaporation_rate : int, default=0.9
@@ -58,6 +60,7 @@ class LTSSelector(WrapperSelector):
         estimator,
         *,
         iterations=20,
+        run_time=None,
         tabu_length=10,
         evaporation_rate=0.9,
         score_neighbors=10,
@@ -70,6 +73,7 @@ class LTSSelector(WrapperSelector):
     ):
         super().__init__(estimator, min_features, max_features, scoring, cv, n_jobs, random_state)
         self.iterations = iterations
+        self.run_time = run_time
         self.tabu_length = tabu_length
         self.evaporation_rate = evaporation_rate
         self.score_neighbors = score_neighbors
@@ -77,12 +81,15 @@ class LTSSelector(WrapperSelector):
         self._trails = None
 
     def _select_features(self, X, y):
+        self._start_timer()
+        iteration = 1
+
         self._trails = np.zeros((X.shape[1], X.shape[1]))
         cur_mask = random_mask(X.shape[1], self._min_features, self._max_features, self._rng)
         cur_score = self._score_mask(cur_mask, X, y)
         best_mask, best_score = cur_mask, cur_score
 
-        for i in range(self.iterations):
+        while True:
             cur_mask = self._best_neighbor(cur_mask, X, y)
             cur_score = self._score_mask(cur_mask, X, y)
 
@@ -90,6 +97,10 @@ class LTSSelector(WrapperSelector):
                 best_mask, best_score = cur_mask, cur_score
 
             self._tabu_list.append(cur_mask)
+
+            if self._end_condition(iteration):
+                break
+            iteration += 1
 
         return best_mask
 
