@@ -22,11 +22,11 @@ class LTSSelector(WrapperSelector, LSMixin):
         The number of iterations to perform.
     run_time : int, default=None
         Maximum runtime of the selector in milliseconds. If set supersedes the ``iterations`` param.
-    tabu_length : int, default=10
+    tabu_length : int, default=15
         Number of elements in the tabu list.
     evaporation_rate : int, default=0.9
         Rate at which trail values are decreasing with iterations.
-    score_neighbors : int, default=10
+    score_neighbors : int, default=15
         Number of neighbors to actually score in each iteration.
     min_features : int, default=1
         The minimal number of features to select.
@@ -62,9 +62,9 @@ class LTSSelector(WrapperSelector, LSMixin):
         *,
         iterations=20,
         run_time=None,
-        tabu_length=10,
+        tabu_length=15,
         evaporation_rate=0.9,
-        score_neighbors=10,
+        score_neighbors=15,
         min_features=1,
         max_features=-1,
         scoring="accuracy",
