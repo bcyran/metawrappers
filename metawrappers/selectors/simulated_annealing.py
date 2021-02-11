@@ -1,10 +1,10 @@
 from math import exp
 
 from metawrappers.base import WrapperSelector
-from metawrappers.common.mask import random_mask, random_neighbor
+from metawrappers.common.local_search import LSMixin
 
 
-class SASelector(WrapperSelector):
+class SASelector(WrapperSelector, LSMixin):
     """Simulated Annealing feature selector.
 
     Parameters
@@ -77,15 +77,11 @@ class SASelector(WrapperSelector):
         iteration = 1
 
         temperature = self.initial_temperature
-        cur_mask = random_mask(X.shape[1], self._min_features, self._max_features, self._rng)
-        cur_score = self._score_mask(cur_mask, X, y)
+        cur_mask, cur_score = self._random_mask_with_score(X, y)
         best_mask, best_score = cur_mask, cur_score
 
         while True:
-            new_mask = random_neighbor(
-                self.neighborhood, cur_mask, self._min_features, self._max_features, self._rng
-            )
-            new_score = self._score_mask(new_mask, X, y)
+            new_mask, new_score = self._random_neighbor_with_score(cur_mask, X, y)
 
             delta_score = new_score - cur_score
 

@@ -6,10 +6,11 @@ import numpy as np
 from sklearn.utils.extmath import cartesian
 
 from metawrappers.base import WrapperSelector
-from metawrappers.common.mask import flip_neighborhood, random_mask
+from metawrappers.common.local_search import LSMixin
+from metawrappers.common.mask import flip_neighborhood
 
 
-class LTSSelector(WrapperSelector):
+class LTSSelector(WrapperSelector, LSMixin):
     """Learning Tabu Search feature selector.
     See: https://hal.archives-ouvertes.fr/hal-01370396/document.
 
@@ -85,8 +86,7 @@ class LTSSelector(WrapperSelector):
         iteration = 1
 
         self._trails = np.zeros((X.shape[1], X.shape[1]))
-        cur_mask = random_mask(X.shape[1], self._min_features, self._max_features, self._rng)
-        cur_score = self._score_mask(cur_mask, X, y)
+        cur_mask, cur_score = self._random_mask_with_score(X, y)
         best_mask, best_score = cur_mask, cur_score
 
         while True:
