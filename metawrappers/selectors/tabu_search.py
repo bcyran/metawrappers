@@ -87,14 +87,13 @@ class LTSSelector(WrapperSelector, LSMixin):
 
     def _select_features(self, X, y):
         self._start_timer()
-        iteration = 1
-        non_improving_iterations = 0
+        iterations = non_improving_iterations = 0
 
         self._trails = np.zeros((X.shape[1], X.shape[1]))
         cur_mask, cur_score = self._random_mask_with_score(X, y)
         best_mask, best_score = cur_mask, cur_score
 
-        while True:
+        while self._should_end(iterations):
             cur_mask = self._best_neighbor(cur_mask, X, y)
             cur_score = self._score_mask(cur_mask, X, y)
 
@@ -106,14 +105,11 @@ class LTSSelector(WrapperSelector, LSMixin):
 
             self._tabu_list.append(cur_mask)
 
-            if self._end_condition(iteration):
-                break
-
             if self.reset_threshold and non_improving_iterations >= self.reset_threshold:
                 cur_mask, cur_score = self._random_mask_with_score(X, y)
                 non_improving_iterations = 0
 
-            iteration += 1
+            iterations += 1
 
         return best_mask
 

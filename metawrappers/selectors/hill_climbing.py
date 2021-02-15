@@ -68,13 +68,12 @@ class HCSelector(WrapperSelector, LSMixin):
 
     def _select_features(self, X, y):
         self._start_timer()
-        iteration = 1
-        non_improving_iterations = 0
+        iterations = non_improving_iterations = 0
 
         cur_mask, cur_score = self._random_mask_with_score(X, y)
         best_mask, best_score = cur_mask, cur_score
 
-        while True:
+        while not self._should_end(iterations):
             next_mask, next_score = self._random_neighbor_with_score(cur_mask, X, y)
 
             if next_score > cur_score:
@@ -85,13 +84,10 @@ class HCSelector(WrapperSelector, LSMixin):
             else:
                 non_improving_iterations += 1
 
-            if self._end_condition(iteration):
-                break
-
             if self.reset_threshold and non_improving_iterations >= self.reset_threshold:
                 cur_mask, cur_score = self._random_mask_with_score(X, y)
                 non_improving_iterations = 0
 
-            iteration += 1
+            iterations += 1
 
         return best_mask

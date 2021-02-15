@@ -149,12 +149,12 @@ class WrapperSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator, metaclas
     def _time_ms(self):
         return self._time() // (10 ** 6)
 
-    def _end_condition(self, iteration=None):
+    def _should_end(self, iterations=None):
         if self.run_time:
             if self._time_ms() >= self.run_time:
                 return True
-        elif iteration:
-            if iteration >= self.iterations:
+        elif iterations:
+            if iterations >= self.iterations:
                 return True
 
     @if_delegate_has_method(delegate="estimator")
