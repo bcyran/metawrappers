@@ -8,9 +8,10 @@ from sklearn.utils.extmath import cartesian
 from metawrappers.base import WrapperSelector
 from metawrappers.common.local_search import LSMixin
 from metawrappers.common.mask import flip_neighborhood
+from metawrappers.common.run_time import RunTimeMixin
 
 
-class LTSSelector(WrapperSelector, LSMixin):
+class LTSSelector(WrapperSelector, LSMixin, RunTimeMixin):
     """Learning Tabu Search feature selector.
     See: https://hal.archives-ouvertes.fr/hal-01370396/document.
 
@@ -93,7 +94,7 @@ class LTSSelector(WrapperSelector, LSMixin):
         cur_mask, cur_score = self._random_mask_with_score(X, y)
         best_mask, best_score = cur_mask, cur_score
 
-        while self._should_end(iterations):
+        while not self._should_end(iterations):
             cur_mask = self._best_neighbor(cur_mask, X, y)
             cur_score = self._score_mask(cur_mask, X, y)
 

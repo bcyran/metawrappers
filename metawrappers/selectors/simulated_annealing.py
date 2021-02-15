@@ -2,9 +2,10 @@ from math import exp
 
 from metawrappers.base import WrapperSelector
 from metawrappers.common.local_search import LSMixin
+from metawrappers.common.run_time import RunTimeMixin
 
 
-class SASelector(WrapperSelector, LSMixin):
+class SASelector(WrapperSelector, LSMixin, RunTimeMixin):
     """Simulated Annealing feature selector.
 
     Parameters

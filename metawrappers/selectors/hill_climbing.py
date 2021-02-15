@@ -1,8 +1,9 @@
 from metawrappers.base import WrapperSelector
 from metawrappers.common.local_search import LSMixin
+from metawrappers.common.run_time import RunTimeMixin
 
 
-class HCSelector(WrapperSelector, LSMixin):
+class HCSelector(WrapperSelector, LSMixin, RunTimeMixin):
     """Hill Climbing feature selector.
 
     Parameters
