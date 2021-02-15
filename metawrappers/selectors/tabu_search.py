@@ -28,6 +28,8 @@ class LTSSelector(WrapperSelector, LSMixin):
         Rate at which trail values are decreasing with iterations.
     score_neighbors : int, default=15
         Number of neighbors to actually score in each iteration.
+    reset_threshold : int or None, default=None
+        Number of non-improving iterations after which search is reinitialized.
     min_features : int, default=1
         The minimal number of features to select.
     max_features : int, default=-1
@@ -65,6 +67,7 @@ class LTSSelector(WrapperSelector, LSMixin):
         tabu_length=15,
         evaporation_rate=0.9,
         score_neighbors=15,
+        reset_threshold=None,
         min_features=1,
         max_features=-1,
         scoring="accuracy",
@@ -78,12 +81,14 @@ class LTSSelector(WrapperSelector, LSMixin):
         self.tabu_length = tabu_length
         self.evaporation_rate = evaporation_rate
         self.score_neighbors = score_neighbors
+        self.reset_threshold = reset_threshold
         self._tabu_list = deque(maxlen=self.tabu_length)
         self._trails = None
 
     def _select_features(self, X, y):
         self._start_timer()
         iteration = 1
+        non_improving_iterations = 0
 
         self._trails = np.zeros((X.shape[1], X.shape[1]))
         cur_mask, cur_score = self._random_mask_with_score(X, y)
@@ -95,11 +100,19 @@ class LTSSelector(WrapperSelector, LSMixin):
 
             if cur_score > best_score:
                 best_mask, best_score = cur_mask, cur_score
+                non_improving_iterations = 0
+            else:
+                non_improving_iterations += 1
 
             self._tabu_list.append(cur_mask)
 
             if self._end_condition(iteration):
                 break
+
+            if self.reset_threshold and non_improving_iterations >= self.reset_threshold:
+                cur_mask, cur_score = self._random_mask_with_score(X, y)
+                non_improving_iterations = 0
+
             iteration += 1
 
         return best_mask

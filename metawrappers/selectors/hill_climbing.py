@@ -15,6 +15,8 @@ class HCSelector(WrapperSelector, LSMixin):
         Maximum runtime of the selector in milliseconds. If set supersedes the ``iterations`` param.
     neighborhood: {"1-flip", "2-flip"}, default=None
         Type of the neighborhood. `None` will choose randomly every time neighbor is requested.
+    reset_threshold : int or None, default=None
+        Number of non-improving iterations after which search is reinitialized.
     min_features : int, default=1
         The minimal number of features to select.
     max_features : int, default=-1
@@ -50,6 +52,7 @@ class HCSelector(WrapperSelector, LSMixin):
         iterations=50,
         run_time=None,
         neighborhood="2-flip",
+        reset_threshold=None,
         min_features=1,
         max_features=-1,
         scoring="accuracy",
@@ -61,21 +64,34 @@ class HCSelector(WrapperSelector, LSMixin):
         self.iterations = iterations
         self.run_time = run_time
         self.neighborhood = neighborhood
+        self.reset_threshold = reset_threshold
 
     def _select_features(self, X, y):
         self._start_timer()
         iteration = 1
+        non_improving_iterations = 0
 
         cur_mask, cur_score = self._random_mask_with_score(X, y)
+        best_mask, best_score = cur_mask, cur_score
 
         while True:
             next_mask, next_score = self._random_neighbor_with_score(cur_mask, X, y)
 
             if next_score > cur_score:
                 cur_mask, cur_score = next_mask, next_score
+                if cur_score > best_score:
+                    best_mask, best_score = cur_mask, cur_score
+                non_improving_iterations = 0
+            else:
+                non_improving_iterations += 1
 
             if self._end_condition(iteration):
                 break
+
+            if self.reset_threshold and non_improving_iterations >= self.reset_threshold:
+                cur_mask, cur_score = self._random_mask_with_score(X, y)
+                non_improving_iterations = 0
+
             iteration += 1
 
-        return cur_mask
+        return best_mask

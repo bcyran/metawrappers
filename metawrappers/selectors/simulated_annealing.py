@@ -17,6 +17,8 @@ class SASelector(WrapperSelector, LSMixin):
         Maximum runtime of the selector in milliseconds. If set supersedes the ``iterations`` param.
     neighborhood: {"1-flip", "2-flip"}, default=None
         Type of the neighborhood. `None` will choose randomly every time neighbor is requested.
+    reset_threshold : int or None, default=None
+        Number of non-improving iterations after which search is reinitialized.
     initial_temperature : int or float, default=10
         Initial annealing temperature.
     cooling_rate : float, default=0.05
@@ -58,6 +60,7 @@ class SASelector(WrapperSelector, LSMixin):
         neighborhood="2-flip",
         initial_temperature=10,
         cooling_rate=0.05,
+        reset_threshold=None,
         min_features=1,
         max_features=-1,
         scoring="accuracy",
@@ -71,10 +74,12 @@ class SASelector(WrapperSelector, LSMixin):
         self.neighborhood = neighborhood
         self.initial_temperature = initial_temperature
         self.cooling_rate = cooling_rate
+        self.reset_threshold = reset_threshold
 
     def _select_features(self, X, y):
         self._start_timer()
         iteration = 1
+        non_improving_iterations = 0
 
         temperature = self.initial_temperature
         cur_mask, cur_score = self._random_mask_with_score(X, y)
@@ -89,13 +94,21 @@ class SASelector(WrapperSelector, LSMixin):
                 cur_mask, cur_score = new_mask, new_score
                 if new_score > best_score:
                     best_mask, best_score = new_mask, new_score
-            elif exp(delta_score / temperature) > self._rng.random():
-                cur_mask, cur_score = new_mask, new_score
+                non_improving_iterations = 0
+            else:
+                if exp(delta_score / temperature) > self._rng.random():
+                    cur_mask, cur_score = new_mask, new_score
+                non_improving_iterations += 1
 
             temperature *= 1 - self.cooling_rate
 
             if self._end_condition(iteration):
                 break
+
+            if self.reset_threshold and non_improving_iterations >= self.reset_threshold:
+                cur_mask, cur_score = self._random_mask_with_score(X, y)
+                non_improving_iterations = 0
+
             iteration += 1
 
         return best_mask
