@@ -5,11 +5,11 @@ from metawrappers import LTSSelector
 
 
 # fmt: off
-EXPECTED_SUPPORT = [False, False, True, False, False, True, False, False, True, False, True, True,
-                    False, True, False, False, True, True, False, False, False, False, True, True,
+EXPECTED_SUPPORT = [True, True, False, False, False, True, False, False, True, False, True, True,
+                    False, True, False, False, True, True, False, False, False, False, True, False,
                     False, True, False, True, False, True]
 # fmt: on
-EXPECTED_SCORE = 0.9209138840070299
+EXPECTED_SCORE = 0.9349736379613357
 
 
 def test_lts_selector(classifier, dataset, random_state):

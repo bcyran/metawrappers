@@ -110,6 +110,8 @@ class LTSSelector(WrapperSelector, LSMixin, RunTimeMixin):
                 cur_mask, cur_score = self._random_mask_with_score(X, y)
                 non_improving_iterations = 0
 
+            self._update_trails(best_mask, best_score)
+
             iterations += 1
 
         return best_mask
