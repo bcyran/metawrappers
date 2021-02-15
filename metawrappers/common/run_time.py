@@ -20,3 +20,4 @@ class RunTimeMixin:
         elif iterations:
             if iterations >= self.iterations:
                 return True
+        return False
