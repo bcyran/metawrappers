@@ -83,14 +83,14 @@ class LTSSelector(WrapperSelector, LSMixin, RunTimeMixin):
         self.evaporation_rate = evaporation_rate
         self.score_neighbors = score_neighbors
         self.reset_threshold = reset_threshold
-        self._tabu_list = deque(maxlen=self.tabu_length)
+        self._tabu_list = None
         self._trails = None
 
     def _select_features(self, X, y):
         self._start_timer()
+        self._initialize(X.shape[1])
         iterations = non_improving_iterations = 0
 
-        self._trails = np.zeros((X.shape[1], X.shape[1]))
         cur_mask, cur_score = self._random_mask_with_score(X, y)
         best_mask, best_score = cur_mask, cur_score
 
@@ -115,6 +115,10 @@ class LTSSelector(WrapperSelector, LSMixin, RunTimeMixin):
             iterations += 1
 
         return best_mask
+
+    def _initialize(self, n_features):
+        self._tabu_list = deque(maxlen=self.tabu_length)
+        self._trails = np.zeros((n_features, n_features))
 
     def _best_neighbor(self, mask, X, y):
         neighbors = flip_neighborhood(mask, self._min_features, self._max_features)
