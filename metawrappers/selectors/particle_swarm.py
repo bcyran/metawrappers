@@ -3,6 +3,10 @@ import numpy as np
 from metawrappers.base import WrapperSelector
 from metawrappers.common.mask import random_mask
 from metawrappers.common.run_time import RunTimeMixin
+from metawrappers.common.utils import sigmoid
+
+
+V_CLAMP = (-5, 5)
 
 
 class Particle:
@@ -116,7 +120,7 @@ class PSOSelector(WrapperSelector, RunTimeMixin):
 
     def _init_swarm(self, n_features):
         self._swarm = []
-        for _ in range(n_features):
+        for _ in range(self.n_particles):
             mask = random_mask(n_features, self._min_features, self._max_features, self._rng)
             velocity = self._rng.uniform(-1, 1, n_features)
             self._swarm.append(Particle(mask, velocity))
@@ -127,19 +131,19 @@ class PSOSelector(WrapperSelector, RunTimeMixin):
 
     def _update_velocities(self, global_best_position):
         for particle in self._swarm:
-            r1 = self._rng.uniform(-1, 1)
-            r2 = self._rng.uniform(-1, 1)
+            r1 = self._rng.uniform(0, 1)
+            r2 = self._rng.uniform(0, 1)
             p_best_distance = particle.best_position.astype(int) - particle.position.astype(int)
             g_best_distance = global_best_position.astype(int) - particle.position.astype(int)
             v_cognitive = self.cognitive * r1 * p_best_distance
             v_social = self.social * r2 * g_best_distance
-            particle.velocity = self.inertia * particle.velocity + v_cognitive + v_social
+            velocity = self.inertia * particle.velocity + v_cognitive + v_social
+            particle.velocity = np.clip(velocity, *V_CLAMP)
 
     def _update_positions(self):
         for particle in self._swarm:
-            probability = 1 / (1 + np.exp(-particle.velocity))
             rand = self._rng.uniform(0, 1, particle.position.shape[0])
-            particle.position = rand < probability
+            particle.position = rand < sigmoid(-particle.velocity)
             # TODO: Respect min_features and max_features?
 
     def _get_best(self):
