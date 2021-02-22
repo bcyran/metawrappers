@@ -143,7 +143,7 @@ class PSOSelector(WrapperSelector, RunTimeMixin):
     def _update_positions(self):
         for particle in self._swarm:
             rand = self._rng.uniform(0, 1, particle.position.shape[0])
-            particle.position = rand < sigmoid(-particle.velocity)
+            particle.position = rand < sigmoid(particle.velocity)
             # TODO: Respect min_features and max_features?
 
     def _get_best(self):
