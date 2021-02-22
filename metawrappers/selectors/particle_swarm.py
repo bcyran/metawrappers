@@ -26,6 +26,7 @@ class Particle:
         self._score = score
         if score > self.best_score:
             self.best_score = score
+            self.best_position = self.position
 
 
 class PSOSelector(WrapperSelector, RunTimeMixin):
