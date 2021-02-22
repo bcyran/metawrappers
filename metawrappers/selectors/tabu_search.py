@@ -31,10 +31,6 @@ class LTSSelector(WrapperSelector, LSMixin, RunTimeMixin):
         Number of neighbors to actually score in each iteration.
     reset_threshold : int or None, default=None
         Number of non-improving iterations after which search is reinitialized.
-    min_features : int, default=1
-        The minimal number of features to select.
-    max_features : int, default=-1
-        The maxmimal number of features to select. -1 means all features.
     scoring : str or callable, default='accuracy'
         Scoring metric to use for internal feature set evaluation. This and the following
         scoring-related attributes do not affect the `score` method.
@@ -69,14 +65,12 @@ class LTSSelector(WrapperSelector, LSMixin, RunTimeMixin):
         evaporation_rate=0.9,
         score_neighbors=15,
         reset_threshold=None,
-        min_features=1,
-        max_features=-1,
         scoring="accuracy",
         cv=5,
         n_jobs=-1,
         random_state=None,
     ):
-        super().__init__(estimator, min_features, max_features, scoring, cv, n_jobs, random_state)
+        super().__init__(estimator, scoring, cv, n_jobs, random_state)
         self.iterations = iterations
         self.run_time = run_time
         self.tabu_length = tabu_length
@@ -121,7 +115,7 @@ class LTSSelector(WrapperSelector, LSMixin, RunTimeMixin):
         self._trails = np.zeros((n_features, n_features))
 
     def _best_neighbor(self, mask, X, y):
-        neighbors = flip_neighborhood(mask, self._min_features, self._max_features)
+        neighbors = flip_neighborhood(mask)
         non_tabu = filterfalse(self._is_tabu, neighbors)
         estimate_func = partial(self._estimate_neighbor, mask)
         best_estimated = sorted(non_tabu, key=estimate_func, reverse=True)[: self.score_neighbors]

@@ -9,8 +9,6 @@ from sklearn.utils import check_random_state
 from sklearn.utils.metaestimators import if_delegate_has_method
 from sklearn.utils.validation import check_is_fitted
 
-from metawrappers.utils import adjust_feature_bounds
-
 
 class WrapperSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for all feature selectors.
@@ -19,10 +17,6 @@ class WrapperSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator, metaclas
     ----------
     estimator : ``Estimator`` instance
         A supervised learning estimator with a ``fit`` method.
-    min_features : int, default=1
-        The minimal number of features to select.
-    max_features : int, default=-1
-        The maxmimal number of features to select. -1 means all features.
     scoring : str or callable, default='accuracy'
         Scoring metric to use for internal feature set evaluation. This and the following
         scoring-related attributes do not affect the `score` method.
@@ -50,16 +44,12 @@ class WrapperSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator, metaclas
     def __init__(
         self,
         estimator,
-        min_features=1,
-        max_features=-1,
         scoring="accuracy",
         cv=5,
         n_jobs=-1,
         random_state=None,
     ):
         self.estimator = estimator
-        self.min_features = min_features
-        self.max_features = max_features
         self.scoring = scoring
         self.scorer = get_scorer(scoring)
         self.cv = cv
@@ -67,8 +57,6 @@ class WrapperSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator, metaclas
         self.random_state = random_state
         self._rng = check_random_state(random_state)
         # Real values after adjusting
-        self._min_features = None
-        self._max_features = None
         self._start_time = 0
 
     @abstractmethod
@@ -124,9 +112,6 @@ class WrapperSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator, metaclas
         y : array-like of shape (n_samples,)
             The target values.
         """
-        self._min_features, self._max_features = adjust_feature_bounds(
-            self.min_features, self.max_features, X
-        )
         support_ = self._select_features(X, y)
         features = np.arange(X.shape[1])[support_]
         self.estimator_ = clone(self.estimator)

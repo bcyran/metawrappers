@@ -47,10 +47,6 @@ class PSOSelector(WrapperSelector, RunTimeMixin):
         The number of iterations to perform.
     run_time : int, default=None
         Maximum runtime of the selector in milliseconds. If set supersedes the ``iterations`` param.
-    min_features : int, default=1
-        The minimal number of features to select.
-    max_features : int, default=-1
-        The maxmimal number of features to select. -1 means all features.
     scoring : str or callable, default='accuracy'
         Scoring metric to use for internal feature set evaluation. This and the following
         scoring-related attributes do not affect the `score` method.
@@ -85,14 +81,12 @@ class PSOSelector(WrapperSelector, RunTimeMixin):
         social=2,
         iterations=20,
         run_time=None,
-        min_features=1,
-        max_features=-1,
         scoring="accuracy",
         cv=5,
         n_jobs=-1,
         random_state=None,
     ):
-        super().__init__(estimator, min_features, max_features, scoring, cv, n_jobs, random_state)
+        super().__init__(estimator, scoring, cv, n_jobs, random_state)
         self.iterations = iterations
         self.run_time = run_time
         self.n_particles = n_particles
@@ -121,7 +115,7 @@ class PSOSelector(WrapperSelector, RunTimeMixin):
     def _init_swarm(self, n_features):
         self._swarm = []
         for _ in range(self.n_particles):
-            mask = random_mask(n_features, self._min_features, self._max_features, self._rng)
+            mask = random_mask(n_features, random_state=self._rng)
             velocity = self._rng.uniform(-1, 1, n_features)
             self._swarm.append(Particle(mask, velocity))
 
@@ -144,7 +138,6 @@ class PSOSelector(WrapperSelector, RunTimeMixin):
         for particle in self._swarm:
             rand = self._rng.uniform(0, 1, particle.position.shape[0])
             particle.position = rand < sigmoid(particle.velocity)
-            # TODO: Respect min_features and max_features?
 
     def _get_best(self):
         best_mask, best_score = None, 0

@@ -24,10 +24,6 @@ class SASelector(WrapperSelector, LSMixin, RunTimeMixin):
         Initial annealing temperature.
     cooling_rate : float, default=0.05
         The factor by which the temperature will be decreased with each iteration.
-    min_features : int, default=1
-        The minimal number of features to select.
-    max_features : int, default=-1
-        The maxmimal number of features to select. -1 means all features.
     scoring : str or callable, default='accuracy'
         Scoring metric to use for internal feature set evaluation. This and the following
         scoring-related attributes do not affect the `score` method.
@@ -62,14 +58,12 @@ class SASelector(WrapperSelector, LSMixin, RunTimeMixin):
         initial_temperature=10,
         cooling_rate=0.05,
         reset_threshold=None,
-        min_features=1,
-        max_features=-1,
         scoring="accuracy",
         cv=5,
         n_jobs=-1,
         random_state=None,
     ):
-        super().__init__(estimator, min_features, max_features, scoring, cv, n_jobs, random_state)
+        super().__init__(estimator, scoring, cv, n_jobs, random_state)
         self.iterations = iterations
         self.run_time = run_time
         self.neighborhood = neighborhood

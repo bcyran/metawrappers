@@ -18,10 +18,6 @@ class HCSelector(WrapperSelector, LSMixin, RunTimeMixin):
         Type of the neighborhood. `None` will choose randomly every time neighbor is requested.
     reset_threshold : int or None, default=None
         Number of non-improving iterations after which search is reinitialized.
-    min_features : int, default=1
-        The minimal number of features to select.
-    max_features : int, default=-1
-        The maxmimal number of features to select. -1 means all features.
     scoring : str or callable, default='accuracy'
         Scoring metric to use for internal feature set evaluation. This and the following
         scoring-related attributes do not affect the `score` method.
@@ -54,14 +50,12 @@ class HCSelector(WrapperSelector, LSMixin, RunTimeMixin):
         run_time=None,
         neighborhood="2-flip",
         reset_threshold=None,
-        min_features=1,
-        max_features=-1,
         scoring="accuracy",
         cv=5,
         n_jobs=-1,
         random_state=None,
     ):
-        super().__init__(estimator, min_features, max_features, scoring, cv, n_jobs, random_state)
+        super().__init__(estimator, scoring, cv, n_jobs, random_state)
         self.iterations = iterations
         self.run_time = run_time
         self.neighborhood = neighborhood
