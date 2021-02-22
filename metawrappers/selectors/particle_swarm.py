@@ -1,3 +1,5 @@
+from operator import attrgetter
+
 import numpy as np
 
 from metawrappers.base import WrapperSelector
@@ -120,10 +122,6 @@ class PSOSelector(WrapperSelector, RunTimeMixin):
             velocity = self._rng.uniform(-1, 1, n_features)
             self._swarm.append(Particle(mask, velocity))
 
-    def _update_scores(self, X, y):
-        for particle in self._swarm:
-            particle.score = self._score_mask(particle.position, X, y)
-
     def _update_velocities(self, global_best_position):
         for particle in self._swarm:
             r1 = self._rng.uniform(0, 1)
@@ -140,9 +138,10 @@ class PSOSelector(WrapperSelector, RunTimeMixin):
             rand = self._rng.uniform(0, 1, particle.position.shape[0])
             particle.position = rand < sigmoid(particle.velocity)
 
-    def _get_best(self):
-        best_mask, best_score = None, 0
+    def _update_scores(self, X, y):
         for particle in self._swarm:
-            if particle.best_score > best_score:
-                best_mask, best_score = particle.best_position, particle.best_score
-        return best_mask, best_score
+            particle.score = self._score_mask(particle.position, X, y)
+
+    def _get_best(self):
+        best_particle = sorted(self._swarm, key=attrgetter("best_score"), reverse=True)[0]
+        return best_particle.best_position, best_particle.best_score
