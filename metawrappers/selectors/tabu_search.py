@@ -1,10 +1,7 @@
 from collections import deque
-from functools import partial
-from itertools import filterfalse
 from operator import itemgetter
 
 import numpy as np
-from sklearn.utils.extmath import cartesian
 
 from metawrappers.base import WrapperSelector
 from metawrappers.common.local_search import LSMixin
@@ -12,9 +9,8 @@ from metawrappers.common.mask import flip_neighborhood
 from metawrappers.common.run_time import RunTimeMixin
 
 
-class LTSSelector(WrapperSelector, LSMixin, RunTimeMixin):
-    """Learning Tabu Search feature selector.
-    See: https://hal.archives-ouvertes.fr/hal-01370396/document.
+class TSSelector(WrapperSelector, LSMixin, RunTimeMixin):
+    """Tabu Search with limited first-improvement strategy.
 
     Parameters
     ----------
@@ -26,10 +22,8 @@ class LTSSelector(WrapperSelector, LSMixin, RunTimeMixin):
         Maximum runtime of the selector in milliseconds. If set supersedes the ``iterations`` param.
     tabu_length : int, default=15
         Number of elements in the tabu list.
-    evaporation_rate : int, default=0.9
-        Rate at which trail values are decreasing with iterations.
-    score_neighbors : int, default=15
-        Number of neighbors to actually score in each iteration.
+    score_neighbors : int, default=10
+        Maximum number of neighbors to score in each iteration.
     reset_threshold : int or None, default=None
         Number of non-improving iterations after which search is reinitialized.
     scoring : str or callable, default='accuracy'
@@ -63,8 +57,7 @@ class LTSSelector(WrapperSelector, LSMixin, RunTimeMixin):
         iterations=20,
         run_time=None,
         tabu_length=15,
-        evaporation_rate=0.9,
-        score_neighbors=15,
+        score_neighbors=10,
         reset_threshold=None,
         scoring="accuracy",
         cv=5,
@@ -75,22 +68,20 @@ class LTSSelector(WrapperSelector, LSMixin, RunTimeMixin):
         self.iterations = iterations
         self.run_time = run_time
         self.tabu_length = tabu_length
-        self.evaporation_rate = evaporation_rate
         self.score_neighbors = score_neighbors
         self.reset_threshold = reset_threshold
         self._tabu_list = None
-        self._trails = None
 
     def _select_features(self, X, y):
         self._start_timer()
-        self._initialize(X.shape[1])
+        self._tabu_list = deque(maxlen=self.tabu_length)
         iterations = non_improving_iterations = 0
 
         cur_mask, cur_score = self._random_mask_with_score(X, y)
         best_mask, best_score = cur_mask, cur_score
 
         while not self._should_end(iterations):
-            cur_mask, cur_score = self._best_neighbor_with_score(cur_mask, X, y)
+            cur_mask, cur_score = self._best_neighbor_with_score(cur_mask, X, y, best_score)
 
             if cur_score > best_score:
                 best_mask, best_score = cur_mask, cur_score
@@ -104,33 +95,29 @@ class LTSSelector(WrapperSelector, LSMixin, RunTimeMixin):
                 cur_mask, cur_score = self._random_mask_with_score(X, y)
                 non_improving_iterations = 0
 
-            self._update_trails(best_mask, best_score)
-
             iterations += 1
 
         return best_mask
 
-    def _initialize(self, n_features):
-        self._tabu_list = deque(maxlen=self.tabu_length)
-        self._trails = np.zeros((n_features, n_features))
-
-    def _best_neighbor_with_score(self, mask, X, y):
+    def _best_neighbor_with_score(self, mask, X, y, best_score):
         neighbors = flip_neighborhood(mask)
-        non_tabu = list(filterfalse(self._is_tabu, neighbors))
-        estimate_func = partial(self._estimate_neighbor, mask)
-        best_estimated = sorted(non_tabu, key=estimate_func, reverse=True)[: self.score_neighbors]
-        best_estimated_with_scores = ((m, self._score_mask(m, X, y)) for m in best_estimated)
-        return max(best_estimated_with_scores, key=itemgetter(1))
+        self._rng.shuffle(neighbors)
+
+        scored_neighbors = []
+        for mask in neighbors:
+            if self._is_tabu(mask):
+                continue
+
+            score = self._score_mask(mask, X, y)
+            if score > best_score:
+                return mask, score
+
+            scored_neighbors.append((mask, score))
+
+            if len(scored_neighbors) >= self.score_neighbors:
+                break
+
+        return max(scored_neighbors, key=itemgetter(1))
 
     def _is_tabu(self, mask):
         return any(np.array_equal(mask, tabu) for tabu in self._tabu_list)
-
-    def _estimate_neighbor(self, mask, neighbor):
-        diff_index = np.where(mask != neighbor)[0][0]
-        return self._trails.sum(axis=0)[diff_index]
-
-    def _update_trails(self, mask, score):
-        self._trails *= self.evaporation_rate
-        selected_idx = np.where(mask)[0]
-        intersections_idx = cartesian((selected_idx, selected_idx))
-        self._trails[tuple(np.array(intersections_idx).T)] += score
