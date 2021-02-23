@@ -1,6 +1,7 @@
 from collections import deque
 from functools import partial
 from itertools import filterfalse
+from operator import itemgetter
 
 import numpy as np
 from sklearn.utils.extmath import cartesian
@@ -89,8 +90,7 @@ class LTSSelector(WrapperSelector, LSMixin, RunTimeMixin):
         best_mask, best_score = cur_mask, cur_score
 
         while not self._should_end(iterations):
-            cur_mask = self._best_neighbor(cur_mask, X, y)
-            cur_score = self._score_mask(cur_mask, X, y)
+            cur_mask, cur_score = self._best_neighbor_with_score(cur_mask, X, y)
 
             if cur_score > best_score:
                 best_mask, best_score = cur_mask, cur_score
@@ -114,12 +114,13 @@ class LTSSelector(WrapperSelector, LSMixin, RunTimeMixin):
         self._tabu_list = deque(maxlen=self.tabu_length)
         self._trails = np.zeros((n_features, n_features))
 
-    def _best_neighbor(self, mask, X, y):
+    def _best_neighbor_with_score(self, mask, X, y):
         neighbors = flip_neighborhood(mask)
-        non_tabu = filterfalse(self._is_tabu, neighbors)
+        non_tabu = list(filterfalse(self._is_tabu, neighbors))
         estimate_func = partial(self._estimate_neighbor, mask)
         best_estimated = sorted(non_tabu, key=estimate_func, reverse=True)[: self.score_neighbors]
-        return sorted(best_estimated, key=lambda m: self._score_mask(m, X, y), reverse=True)[0]
+        best_estimated_with_scores = ((m, self._score_mask(m, X, y)) for m in best_estimated)
+        return max(best_estimated_with_scores, key=itemgetter(1))
 
     def _is_tabu(self, mask):
         return any(np.array_equal(mask, tabu) for tabu in self._tabu_list)
