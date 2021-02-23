@@ -143,5 +143,5 @@ class PSOSelector(WrapperSelector, RunTimeMixin):
             particle.score = self._score_mask(particle.position, X, y)
 
     def _get_best(self):
-        best_particle = sorted(self._swarm, key=attrgetter("best_score"), reverse=True)[0]
+        best_particle = max(self._swarm, key=attrgetter("best_score"))
         return best_particle.best_position, best_particle.best_score
