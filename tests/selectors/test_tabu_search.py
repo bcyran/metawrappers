@@ -1,4 +1,5 @@
 from metawrappers import TSSelector
+from tests.selectors.conftest import assert_selector_result
 
 
 # fmt: off
@@ -10,9 +11,10 @@ EXPECTED_SCORE = 0.9384885764499121
 
 
 def test_ts_selector(classifier, dataset, random_state):
-    X, y = dataset
-    selector = TSSelector(classifier, random_state=random_state)
-    X_r = selector.fit_transform(X, y)
-    classifier.fit(X_r, y)
-    assert classifier.score(X_r, y) == EXPECTED_SCORE
-    assert list(selector.support_) == EXPECTED_SUPPORT
+    assert_selector_result(
+        TSSelector(classifier, random_state=random_state),
+        classifier,
+        dataset,
+        EXPECTED_SUPPORT,
+        EXPECTED_SCORE,
+    )
