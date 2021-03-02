@@ -104,16 +104,14 @@ class PSOSelector(WrapperSelector, RunTimeMixin):
         iterations = 0
 
         self._update_scores(X, y)
-        best_mask, best_score = self._get_best()
 
         while not self._should_end(iterations):
-            self._update_velocities(best_mask)
+            self._update_velocities()
             self._update_positions()
             self._update_scores(X, y)
-            best_mask, best_score = self._get_best()
             iterations += 1
 
-        return best_mask
+        return self._best_position()
 
     def _init_swarm(self, n_features):
         self._swarm = []
@@ -122,7 +120,8 @@ class PSOSelector(WrapperSelector, RunTimeMixin):
             velocity = self._rng.uniform(-1, 1, n_features)
             self._swarm.append(Particle(mask, velocity))
 
-    def _update_velocities(self, global_best_position):
+    def _update_velocities(self):
+        global_best_position = self._best_position()
         for particle in self._swarm:
             r1 = self._rng.uniform(0, 1)
             r2 = self._rng.uniform(0, 1)
@@ -142,6 +141,5 @@ class PSOSelector(WrapperSelector, RunTimeMixin):
         for particle in self._swarm:
             particle.score = self._score_mask(particle.position, X, y)
 
-    def _get_best(self):
-        best_particle = max(self._swarm, key=attrgetter("best_score"))
-        return best_particle.best_position, best_particle.best_score
+    def _best_position(self):
+        return max(self._swarm, key=attrgetter("best_score")).best_position
