@@ -5,7 +5,6 @@ from sklearn.feature_selection import f_classif
 
 from metawrappers.base import WrapperSelector
 from metawrappers.common.run_time import RunTimeMixin
-from metawrappers.common.utils import roulette
 
 
 class ACOSelector(WrapperSelector, RunTimeMixin):
@@ -119,7 +118,7 @@ class ACOSelector(WrapperSelector, RunTimeMixin):
         feature_values = effective_pheromone * effective_heuristic
         feature_probs = feature_values / np.sum(feature_values)
         feature_num = self._rng.randint(1, feature_probs.size)
-        selected = roulette(feature_probs, feature_num, self._rng)
+        selected = self._rng.choice(feature_probs.size, size=feature_num, p=feature_probs)
         ant = np.zeros(feature_probs.size, dtype=bool)
         ant[selected] = True
         return ant
