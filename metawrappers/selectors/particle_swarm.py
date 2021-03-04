@@ -139,7 +139,7 @@ class PSOSelector(WrapperSelector, RunTimeMixin):
 
     def _update_scores(self, X, y):
         for particle in self._swarm:
-            particle.score = self._score_mask(particle.position, X, y)
+            particle.score = self._fitness(particle.position, X, y)
 
     def _best_position(self):
         return max(self._swarm, key=attrgetter("best_score")).best_position

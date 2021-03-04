@@ -110,7 +110,7 @@ class ACOSelector(WrapperSelector, RunTimeMixin):
 
     def _ants_with_scores(self, X, y):
         ants = (self._construct_ant() for _ in range(self.n_ants))
-        return list((ant, self._score_mask(ant, X, y)) for ant in ants)
+        return list((ant, self._fitness(ant, X, y)) for ant in ants)
 
     def _construct_ant(self):
         effective_pheromone = self._pheromone ** self.pheromone_coef

@@ -108,7 +108,7 @@ class TSSelector(WrapperSelector, LSMixin, RunTimeMixin):
             if self._is_tabu(mask):
                 continue
 
-            score = self._score_mask(mask, X, y)
+            score = self._fitness(mask, X, y)
             if score > best_score:
                 return mask, score
 

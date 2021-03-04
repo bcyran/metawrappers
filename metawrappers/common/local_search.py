@@ -8,8 +8,8 @@ class LSMixin:
 
     def _random_mask_with_score(self, X, y):
         mask = random_mask(X.shape[1], random_state=self._rng)
-        return mask, self._score_mask(mask, X, y)
+        return mask, self._fitness(mask, X, y)
 
     def _random_neighbor_with_score(self, cur_mask, X, y):
         neighbor = random_neighbor(self.neighborhood, cur_mask, random_state=self._rng)
-        return neighbor, self._score_mask(neighbor, X, y)
+        return neighbor, self._fitness(neighbor, X, y)

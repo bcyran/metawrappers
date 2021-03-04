@@ -98,6 +98,9 @@ class WrapperSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator, metaclas
             self.estimator.fit(X, y)
             return self.scorer(self.estimator, X, y)
 
+    def _fitness(self, mask, X, y):
+        return self._score_mask(mask, X, y)
+
     @property
     def classes_(self):
         return self.estimator_.classes_

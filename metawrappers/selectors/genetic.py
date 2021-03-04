@@ -130,6 +130,6 @@ class GASelector(WrapperSelector, RunTimeMixin):
 
     def _score_population(self, X, y):
         self._population_with_scores = [
-            (individual, self._score_mask(individual, X, y)) for individual in self._population
+            (individual, self._fitness(individual, X, y)) for individual in self._population
         ]
         self._population_with_scores.sort(key=itemgetter(1), reverse=True)
