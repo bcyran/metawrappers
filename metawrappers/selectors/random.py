@@ -9,6 +9,9 @@ class RandomSelector(WrapperSelector):
     ----------
     estimator : ``Estimator`` instance
         A supervised learning estimator with a ``fit`` method.
+    feature_num_penalty : float, default=0
+        Controls how much number of selected features affects the fitness measure.
+        Increasing this number will push the selector to minimize feature number.
     scoring : str or callable, default='accuracy'
         Scoring metric to use for internal feature set evaluation. This and the following
         scoring-related attributes do not affect the `score` method.
@@ -37,12 +40,13 @@ class RandomSelector(WrapperSelector):
         self,
         estimator,
         *,
+        feature_num_penalty=0,
         scoring="accuracy",
         cv=5,
         n_jobs=-1,
         random_state=None,
     ):
-        super().__init__(estimator, scoring, cv, n_jobs, random_state)
+        super().__init__(estimator, feature_num_penalty, scoring, cv, n_jobs, random_state)
 
     def _select_features(self, X, y):
         return random_mask(X.shape[1], random_state=self._rng)

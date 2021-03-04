@@ -25,6 +25,9 @@ class GASelector(WrapperSelector, RunTimeMixin):
         The number of iterations to perform.
     run_time : int, default=None
         Maximum runtime of the selector in milliseconds. If set supersedes the ``iterations`` param.
+    feature_num_penalty : float, default=0
+        Controls how much number of selected features affects the fitness measure.
+        Increasing this number will push the selector to minimize feature number.
     scoring : str or callable, default='accuracy'
         Scoring metric to use for internal feature set evaluation. This and the following
         scoring-related attributes do not affect the `score` method.
@@ -58,12 +61,13 @@ class GASelector(WrapperSelector, RunTimeMixin):
         mutation_rate=0.2,
         iterations=20,
         run_time=None,
+        feature_num_penalty=0,
         scoring="accuracy",
         cv=5,
         n_jobs=-1,
         random_state=None,
     ):
-        super().__init__(estimator, scoring, cv, n_jobs, random_state)
+        super().__init__(estimator, feature_num_penalty, scoring, cv, n_jobs, random_state)
         self.iterations = iterations
         self.run_time = run_time
         self.population_size = population_size
