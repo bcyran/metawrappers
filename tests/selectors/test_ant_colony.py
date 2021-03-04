@@ -10,7 +10,7 @@ EXPECTED_SUPPORT = [True, True, False, False, False, False, False, True, True, F
 EXPECTED_SCORE = 0.9384885764499121
 
 
-def test_pso_selector(classifier, dataset, random_state):
+def test_aco_selector(classifier, dataset, random_state):
     assert_selector_result(
         ACOSelector(classifier, random_state=random_state),
         classifier,
