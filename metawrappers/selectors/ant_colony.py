@@ -86,16 +86,16 @@ class ACOSelector(WrapperSelector, RunTimeMixin):
         self._start_timer()
         iterations = 0
 
-        best_mask, best_score = None, 0
+        best_mask, best_fitness = None, 0
 
         while not self._should_end(iterations):
-            ants_with_scores = self._ants_with_scores(X, y)
-            best_ant, best_ant_score = max(ants_with_scores, key=itemgetter(1))
+            ants_with_fitnesses = self._ants_with_fitnesses(X, y)
+            best_ant, best_ant_fitness = max(ants_with_fitnesses, key=itemgetter(1))
 
-            if best_ant_score > best_score:
-                best_mask, best_score = best_ant, best_ant_score
+            if best_ant_fitness > best_fitness:
+                best_mask, best_fitness = best_ant, best_ant_fitness
 
-            self._update_pheromone(ants_with_scores, best_score)
+            self._update_pheromone(ants_with_fitnesses, best_fitness)
 
             iterations += 1
 
@@ -108,7 +108,7 @@ class ACOSelector(WrapperSelector, RunTimeMixin):
         self._pheromone = np.ones((X.shape[1],))
         self._heuristic = heuristic_scores
 
-    def _ants_with_scores(self, X, y):
+    def _ants_with_fitnesses(self, X, y):
         ants = (self._construct_ant() for _ in range(self.n_ants))
         return list((ant, self._fitness(ant, X, y)) for ant in ants)
 
@@ -123,7 +123,7 @@ class ACOSelector(WrapperSelector, RunTimeMixin):
         ant[selected] = True
         return ant
 
-    def _update_pheromone(self, ants_with_scores, best_score):
+    def _update_pheromone(self, ants_with_fitnesses, best_fitness):
         self._pheromone *= 1 - self.evaporation_rate
-        for mask, score in ants_with_scores:
-            self._pheromone[mask] += 1 / (1 + (best_score - score) / best_score)
+        for mask, fitness in ants_with_fitnesses:
+            self._pheromone[mask] += 1 / (1 + (best_fitness - fitness) / best_fitness)

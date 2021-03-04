@@ -65,22 +65,22 @@ class HCSelector(WrapperSelector, LSMixin, RunTimeMixin):
         self._start_timer()
         iterations = non_improving_iterations = 0
 
-        cur_mask, cur_score = self._random_mask_with_score(X, y)
-        best_mask, best_score = cur_mask, cur_score
+        cur_mask, cur_fitness = self._random_mask_with_fitness(X, y)
+        best_mask, best_fitness = cur_mask, cur_fitness
 
         while not self._should_end(iterations):
-            next_mask, next_score = self._random_neighbor_with_score(cur_mask, X, y)
+            next_mask, next_fitness = self._random_neighbor_with_fitness(cur_mask, X, y)
 
-            if next_score > cur_score:
-                cur_mask, cur_score = next_mask, next_score
-                if cur_score > best_score:
-                    best_mask, best_score = cur_mask, cur_score
+            if next_fitness > cur_fitness:
+                cur_mask, cur_fitness = next_mask, next_fitness
+                if cur_fitness > best_fitness:
+                    best_mask, best_fitness = cur_mask, cur_fitness
                 non_improving_iterations = 0
             else:
                 non_improving_iterations += 1
 
             if self.reset_threshold and non_improving_iterations >= self.reset_threshold:
-                cur_mask, cur_score = self._random_mask_with_score(X, y)
+                cur_mask, cur_fitness = self._random_mask_with_fitness(X, y)
                 non_improving_iterations = 0
 
             iterations += 1

@@ -70,7 +70,7 @@ class GASelector(WrapperSelector, RunTimeMixin):
         self.elite_size = elite_size
         self.mutation_rate = mutation_rate
         self._population = None
-        self._population_with_scores = None
+        self._population_with_fitnesses = None
         self._mating_pool = None
 
     def _select_features(self, X, y):
@@ -78,16 +78,16 @@ class GASelector(WrapperSelector, RunTimeMixin):
         iterations = 0
 
         self._initialize(X, y)
-        best_mask, best_score = self._population_with_scores[0]
+        best_mask, best_fitness = self._population_with_fitnesses[0]
 
         while not self._should_end(iterations):
             self._selection()
             self._breeding()
             self._mutation()
-            self._score_population(X, y)
+            self._evaluate_population(X, y)
 
-            if self._population_with_scores[0][1] > best_score:
-                best_mask, best_score = self._population_with_scores[0]
+            if self._population_with_fitnesses[0][1] > best_fitness:
+                best_mask, best_fitness = self._population_with_fitnesses[0]
 
             iterations += 1
 
@@ -97,18 +97,18 @@ class GASelector(WrapperSelector, RunTimeMixin):
         self._population = list(
             random_mask(X.shape[1], random_state=self._rng) for _ in range(self.population_size)
         )
-        self._score_population(X, y)
+        self._evaluate_population(X, y)
 
     def _selection(self):
-        masks, scores = zip(*self._population_with_scores)
-        masks, scores = np.array(masks), np.array(scores)
-        selection_probs = scores / np.sum(scores)
+        masks, fitnesses = zip(*self._population_with_fitnesses)
+        masks, fitnesses = np.array(masks), np.array(fitnesses)
+        selection_probs = fitnesses / np.sum(fitnesses)
         n_select = self.population_size - self.elite_size + 1
         selected = self._rng.choice(self.population_size, size=n_select, p=selection_probs)
         self._mating_pool = masks[selected]
 
     def _breeding(self):
-        elite = self._population_with_scores[: self.elite_size]
+        elite = self._population_with_fitnesses[: self.elite_size]
         self._population = list(map(itemgetter(0), elite))
         for parent1, parent2 in pairwise(self._mating_pool):
             self._population.append(self._sp_crossover(parent1, parent2))
@@ -128,8 +128,8 @@ class GASelector(WrapperSelector, RunTimeMixin):
             if self._rng.random() <= self.mutation_rate:
                 self._population[i] = random_flip(self._population[i], random_state=self._rng)
 
-    def _score_population(self, X, y):
-        self._population_with_scores = [
+    def _evaluate_population(self, X, y):
+        self._population_with_fitnesses = [
             (individual, self._fitness(individual, X, y)) for individual in self._population
         ]
-        self._population_with_scores.sort(key=itemgetter(1), reverse=True)
+        self._population_with_fitnesses.sort(key=itemgetter(1), reverse=True)

@@ -77,14 +77,14 @@ class TSSelector(WrapperSelector, LSMixin, RunTimeMixin):
         self._tabu_list = deque(maxlen=self.tabu_length)
         iterations = non_improving_iterations = 0
 
-        cur_mask, cur_score = self._random_mask_with_score(X, y)
-        best_mask, best_score = cur_mask, cur_score
+        cur_mask, cur_fitness = self._random_mask_with_fitness(X, y)
+        best_mask, best_fitness = cur_mask, cur_fitness
 
         while not self._should_end(iterations):
-            cur_mask, cur_score = self._best_neighbor_with_score(cur_mask, X, y, best_score)
+            cur_mask, cur_fitness = self._best_neighbor_with_fitness(cur_mask, X, y, best_fitness)
 
-            if cur_score > best_score:
-                best_mask, best_score = cur_mask, cur_score
+            if cur_fitness > best_fitness:
+                best_mask, best_fitness = cur_mask, cur_fitness
                 non_improving_iterations = 0
             else:
                 non_improving_iterations += 1
@@ -92,32 +92,32 @@ class TSSelector(WrapperSelector, LSMixin, RunTimeMixin):
             self._tabu_list.append(cur_mask)
 
             if self.reset_threshold and non_improving_iterations >= self.reset_threshold:
-                cur_mask, cur_score = self._random_mask_with_score(X, y)
+                cur_mask, cur_fitness = self._random_mask_with_fitness(X, y)
                 non_improving_iterations = 0
 
             iterations += 1
 
         return best_mask
 
-    def _best_neighbor_with_score(self, mask, X, y, best_score):
+    def _best_neighbor_with_fitness(self, mask, X, y, best_fitness):
         neighbors = flip_neighborhood(mask)
         self._rng.shuffle(neighbors)
 
-        scored_neighbors = []
+        neighbors_with_fitnesses = []
         for mask in neighbors:
             if self._is_tabu(mask):
                 continue
 
-            score = self._fitness(mask, X, y)
-            if score > best_score:
-                return mask, score
+            fitness = self._fitness(mask, X, y)
+            if fitness > best_fitness:
+                return mask, fitness
 
-            scored_neighbors.append((mask, score))
+            neighbors_with_fitnesses.append((mask, fitness))
 
-            if len(scored_neighbors) >= self.score_neighbors:
+            if len(neighbors_with_fitnesses) >= self.score_neighbors:
                 break
 
-        return max(scored_neighbors, key=itemgetter(1))
+        return max(neighbors_with_fitnesses, key=itemgetter(1))
 
     def _is_tabu(self, mask):
         return any(np.array_equal(mask, tabu) for tabu in self._tabu_list)

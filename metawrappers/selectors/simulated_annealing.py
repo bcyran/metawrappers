@@ -76,28 +76,28 @@ class SASelector(WrapperSelector, LSMixin, RunTimeMixin):
         iterations = non_improving_iterations = 0
 
         temperature = self.initial_temperature
-        cur_mask, cur_score = self._random_mask_with_score(X, y)
-        best_mask, best_score = cur_mask, cur_score
+        cur_mask, cur_fitness = self._random_mask_with_fitness(X, y)
+        best_mask, best_fitness = cur_mask, cur_fitness
 
         while not self._should_end(iterations):
-            new_mask, new_score = self._random_neighbor_with_score(cur_mask, X, y)
+            new_mask, new_fitness = self._random_neighbor_with_fitness(cur_mask, X, y)
 
-            delta_score = new_score - cur_score
+            delta_fitness = new_fitness - cur_fitness
 
-            if delta_score >= 0:
-                cur_mask, cur_score = new_mask, new_score
-                if new_score > best_score:
-                    best_mask, best_score = new_mask, new_score
+            if delta_fitness >= 0:
+                cur_mask, cur_fitness = new_mask, new_fitness
+                if new_fitness > best_fitness:
+                    best_mask, best_fitness = new_mask, new_fitness
                 non_improving_iterations = 0
             else:
-                if exp(delta_score / temperature) > self._rng.random():
-                    cur_mask, cur_score = new_mask, new_score
+                if exp(delta_fitness / temperature) > self._rng.random():
+                    cur_mask, cur_fitness = new_mask, new_fitness
                 non_improving_iterations += 1
 
             temperature *= 1 - self.cooling_rate
 
             if self.reset_threshold and non_improving_iterations >= self.reset_threshold:
-                cur_mask, cur_score = self._random_mask_with_score(X, y)
+                cur_mask, cur_fitness = self._random_mask_with_fitness(X, y)
                 non_improving_iterations = 0
 
             iterations += 1

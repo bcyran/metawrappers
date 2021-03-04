@@ -14,20 +14,20 @@ V_CLAMP = (-5, 5)
 class Particle:
     def __init__(self, position, velocity):
         self.position = position
-        self._score = 0
+        self._fitness = 0
         self.best_position = position
-        self.best_score = 0
+        self.best_fitness = 0
         self.velocity = velocity
 
     @property
-    def score(self):
-        return self._score
+    def fitness(self):
+        return self._fitness
 
-    @score.setter
-    def score(self, score):
-        self._score = score
-        if score > self.best_score:
-            self.best_score = score
+    @fitness.setter
+    def fitness(self, fitness):
+        self._fitness = fitness
+        if fitness > self.best_fitness:
+            self.best_fitness = fitness
             self.best_position = self.position
 
 
@@ -103,12 +103,12 @@ class PSOSelector(WrapperSelector, RunTimeMixin):
         self._init_swarm(X.shape[1])
         iterations = 0
 
-        self._update_scores(X, y)
+        self._update_fitnesses(X, y)
 
         while not self._should_end(iterations):
             self._update_velocities()
             self._update_positions()
-            self._update_scores(X, y)
+            self._update_fitnesses(X, y)
             iterations += 1
 
         return self._best_position()
@@ -137,9 +137,9 @@ class PSOSelector(WrapperSelector, RunTimeMixin):
             rand = self._rng.uniform(0, 1, particle.position.shape[0])
             particle.position = rand < sigmoid(particle.velocity)
 
-    def _update_scores(self, X, y):
+    def _update_fitnesses(self, X, y):
         for particle in self._swarm:
-            particle.score = self._fitness(particle.position, X, y)
+            particle.fitness = self._fitness(particle.position, X, y)
 
     def _best_position(self):
-        return max(self._swarm, key=attrgetter("best_score")).best_position
+        return max(self._swarm, key=attrgetter("best_fitness")).best_position
