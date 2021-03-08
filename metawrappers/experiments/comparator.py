@@ -81,7 +81,7 @@ class Comparator:
                 estimator.fit(X[train], y[train])
                 score = estimator.score(X[test], y[test])
                 run_results[label]["scores"].append(score)
-                run_results[label]["features"].append(estimator.n_features_)
+                run_results[label]["features"].append(getattr(estimator, "n_features_", X.shape[1]))
 
                 if self.verbose:
                     print(".", end="", flush=True)
