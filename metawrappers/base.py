@@ -104,7 +104,9 @@ class WrapperSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator, metaclas
             return self.scorer(self.estimator, X, y)
 
     def _fitness(self, mask, X, y):
-        return self._score_mask(mask, X, y) / (1 + self.feature_num_penalty * np.sum(mask))
+        classification_score = self._score_mask(mask, X, y)
+        feature_num_score = np.sum(mask) / X.shape[1]
+        return classification_score / (1 + self.feature_num_penalty * feature_num_score)
 
     @property
     def classes_(self):
