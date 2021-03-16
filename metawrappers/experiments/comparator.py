@@ -120,7 +120,7 @@ class Comparator:
             DataFrame containing average score and Wilcoxon signed-rank test results
             with respect to baseline for each estimator.
         """
-        summary = pd.DataFrame(columns=["#feat", "avg score", "max score", "W", "p", "h0 rejected"])
+        summary = pd.DataFrame(columns=["#feat", "avg score", "max score", "p", "h0 rejected"])
 
         baseline_name = (
             list(self._estimators.keys())[baseline] if isinstance(baseline, int) else baseline
@@ -129,14 +129,14 @@ class Comparator:
 
         for estimator in self._estimators.keys():
             if estimator == baseline_name:
-                w, p = None, None
+                p = None
             else:
-                w, p = wilcoxon(
+                p = wilcoxon(
                     self.results[baseline_name]["score"], self.results[estimator]["score"]
-                )
+                )[1]
 
             max_score = self.results[estimator]["score"].max()
-            summary.loc[estimator] = [*averages[estimator], max_score, w, p, None]
+            summary.loc[estimator] = [*averages[estimator], max_score, p, None]
 
         summary["h0 rejected"] = summary["p"] < significance_level
         return summary
