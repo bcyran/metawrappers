@@ -109,6 +109,7 @@ class ACOSelector(WrapperSelector, RunTimeMixin):
         heuristic_scores = self.heuristic_func(X, y)
         if isinstance(heuristic_scores, (tuple, list)):
             heuristic_scores = heuristic_scores[0]
+        np.nan_to_num(heuristic_scores, copy=False, nan=0, posinf=0, neginf=0)
         self._pheromone = np.ones((X.shape[1],))
         self._heuristic = heuristic_scores
 
