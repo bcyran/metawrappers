@@ -118,6 +118,9 @@ class GASelector(WrapperSelector, RunTimeMixin):
             self._population.append(self._sp_crossover(parent1, parent2))
 
     def _sp_crossover(self, parent1, parent2):
+        # Don't even waste time trying if parents are identical, just return the same as child
+        if np.array_equal(parent1, parent2):
+            return parent1
         # We need to ensure that at lest one feature is selected so we always cut
         # after the first `True` in parent1. If it's on the last position then we switch parents.
         select_start = np.argmax(parent1) + 1
